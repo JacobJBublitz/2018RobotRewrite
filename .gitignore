@@ -1,0 +1,13 @@
+# Ecipse
+/.settings/
+/.project
+
+# Intellij
+/.idea/
+
+# VSCode
+/.vscode/
+
+# Gradle
+/.gradle/
+/build
