@@ -48,7 +48,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     private final PigeonIMU gyroscope = new PigeonIMU(Constants.DRIVETRAIN_PIGEON_ID);
 
-    private ChassisSpeeds chassisSpeeds = new ChassisSpeeds(0.0, 0.0, 0.0);
+    private ChassisSpeeds chassisSpeeds = new ChassisSpeeds(1, -1, 0.0);
 
     public DrivetrainSubsystem() {
         var moduleFactory = new SwerveModuleFactory<>(

@@ -7,10 +7,18 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.swervedrivespecialties.swervelib.ModuleConfiguration;
 import com.swervedrivespecialties.swervelib.SteerController;
 import com.swervedrivespecialties.swervelib.SteerControllerFactory;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardContainer;
 
 public class TalonSRXSteerControllerFactory implements SteerControllerFactory<TalonSRXSteerControllerFactory.Implementation, TalonSRXSteerControllerConfiguration> {
 
     private static final double SENSOR_POSITION_COEFFICIENT = (2.0 * Math.PI) / 1024.0;
+
+    @Override
+    public void addDashboardEntries(ShuffleboardContainer container, Implementation controller) {
+        SteerControllerFactory.super.addDashboardEntries(container, controller);
+
+        container.addNumber("Current Steer Reading", controller::getRawReading);
+    }
 
     @Override
     public TalonSRXSteerControllerFactory.Implementation create(TalonSRXSteerControllerConfiguration steerConfiguration, ModuleConfiguration moduleConfiguration) {
@@ -45,11 +53,11 @@ public class TalonSRXSteerControllerFactory implements SteerControllerFactory<Ta
         @Override
         public void setReferenceAngle(double referenceAngleRadians) {
             double rawReferenceAngle = ((referenceAngleRadians - offset) / SENSOR_POSITION_COEFFICIENT) % 1024.0;
-            if (rawReferenceAngle < 0){
-                rawReferenceAngle += 1024.0;
+            if (rawReferenceAngle > 0){
+                rawReferenceAngle -= 1024.0;
             }
-            referenceAngle = Math.toRadians(-rawReferenceAngle);
-            motor.set(TalonSRXControlMode.Position, -rawReferenceAngle);
+            referenceAngle = Math.toRadians(rawReferenceAngle);
+            motor.set(TalonSRXControlMode.Position, rawReferenceAngle);
         }
 
         @Override
@@ -59,6 +67,9 @@ public class TalonSRXSteerControllerFactory implements SteerControllerFactory<Ta
                 angleRadians += (2 * Math.PI);
         }
             return angleRadians;
+        }
+        public double getRawReading(){
+            return motor.getSelectedSensorPosition();
         }
     }
 }
