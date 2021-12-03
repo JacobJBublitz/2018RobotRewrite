@@ -6,6 +6,7 @@ import com.swervedrivespecialties.swervelib.ModuleConfiguration;
 import com.swervedrivespecialties.swervelib.SwerveModule;
 import com.swervedrivespecialties.swervelib.SwerveModuleFactory;
 import com.swervedrivespecialties.swervelib.SwerveModuleFactoryBuilder;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.SwerveDriveKinematics;
@@ -20,8 +21,8 @@ import frc.robot.swerve.TalonSRXSteerControllerConfiguration;
 import frc.robot.swerve.TalonSRXSteerControllerFactory;
 
 public class DrivetrainSubsystem extends SubsystemBase {
-    public static final double TRACKWIDTH_METERS = 1.0;
-    public static final double WHEELBASE_METERS = 1.0;
+    public static final double TRACKWIDTH_METERS = 0.91;
+    public static final double WHEELBASE_METERS = 0.685;
     public static final double MAX_VOLTAGE = 12.0;
     public static final double MAX_VELOCITY_METERS_PER_SECOND = 4.2;
     public static final double MAX_ANGULAR_VELOCITY = MAX_VELOCITY_METERS_PER_SECOND /
@@ -33,6 +34,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
             1.0,
             false
     );
+
 
 
     private final SwerveModule frontLeftModule;
@@ -48,7 +50,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     private final PigeonIMU gyroscope = new PigeonIMU(Constants.DRIVETRAIN_PIGEON_ID);
 
-    private ChassisSpeeds chassisSpeeds = new ChassisSpeeds(1, -1, 0.0);
+    private ChassisSpeeds chassisSpeeds = new ChassisSpeeds(0, 0, 0.0);
 
     public DrivetrainSubsystem() {
         var moduleFactory = new SwerveModuleFactory<>(
@@ -82,6 +84,12 @@ public class DrivetrainSubsystem extends SubsystemBase {
     public void drive(ChassisSpeeds chassisSpeeds) {
         this.chassisSpeeds = chassisSpeeds;
     }
+
+    public Rotation2d getGyroscopeRotation(){
+        return new Rotation2d();
+    }
+
+    public void zeroGyroscope(){}
 
     @Override
     public void periodic() {
