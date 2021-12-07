@@ -18,14 +18,20 @@ public class TalonSRXDriveControllerFactory implements DriveControllerFactory<Ta
         motor.configAllSettings(config);
         motor.configSelectedFeedbackSensor(TalonSRXFeedbackDevice.QuadEncoder, 0, 50);
         motor.enableVoltageCompensation(true);
-        return new Implementation(motor);
+        double sensorPositionCoefficient = ((1.0/80.0) * moduleConfiguration.getDriveReduction()) * (moduleConfiguration.getWheelDiameter() * Math.PI);
+        double sensorVelocityCoeffecient = sensorPositionCoefficient * 10.0;
+        return new Implementation(motor, sensorPositionCoefficient, sensorVelocityCoeffecient);
     }
 
     public static class Implementation implements DriveController {
         private final TalonSRX motor;
+        private final double sensorPositionCoefficient;
+        private final double sensorVelocityCoeffecient;
 
-        public Implementation(TalonSRX motor) {
+        public Implementation(TalonSRX motor, double sensorPositionCoefficient, double sensorVelocityCoeffecient) {
             this.motor = motor;
+            this.sensorPositionCoefficient = sensorPositionCoefficient;
+            this.sensorVelocityCoeffecient = sensorVelocityCoeffecient;
         }
 
         @Override
@@ -35,7 +41,7 @@ public class TalonSRXDriveControllerFactory implements DriveControllerFactory<Ta
 
         @Override
         public double getStateVelocity() {
-            return motor.getSelectedSensorVelocity() / 36.65 * 0.0254;
+            return motor.getSelectedSensorVelocity() * sensorVelocityCoeffecient;
         }
     }
 }

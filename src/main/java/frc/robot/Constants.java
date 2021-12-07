@@ -13,8 +13,8 @@ package frc.robot;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-    public static final double DRIVETRAIN_TRACKWIDTH_METERS = 0.2794;
-    public static final double DRIVETRAIN_WHEELBASE_METERS = 0.2794;
+    public static final double DRIVETRAIN_TRACKWIDTH_METERS = 0.91;
+    public static final double DRIVETRAIN_WHEELBASE_METERS = 0.685;
 
     public static final int DRIVETRAIN_PIGEON_ID = 0;
 

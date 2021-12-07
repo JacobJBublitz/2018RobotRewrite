@@ -21,20 +21,19 @@ import frc.robot.swerve.TalonSRXSteerControllerConfiguration;
 import frc.robot.swerve.TalonSRXSteerControllerFactory;
 
 public class DrivetrainSubsystem extends SubsystemBase {
-    public static final double TRACKWIDTH_METERS = 0.91;
-    public static final double WHEELBASE_METERS = 0.685;
     public static final double MAX_VOLTAGE = 12.0;
-    public static final double MAX_VELOCITY_METERS_PER_SECOND = 4.2;
-    public static final double MAX_ANGULAR_VELOCITY = MAX_VELOCITY_METERS_PER_SECOND /
-            Math.hypot(TRACKWIDTH_METERS / 2.0, WHEELBASE_METERS / 2.0);
     public static final ModuleConfiguration MK1_CONFIGURATION = new ModuleConfiguration(
             0.1016,
-            (18.0 / 26.0) * (15.0 / 45.0),
+            (18.0 / 26.0) * (15.0/ 60.0),
             false,
             1.0,
             false
     );
-
+    public static final double MAX_VELOCITY_METERS_PER_SECOND = 5330.0 / 60.0 *
+            MK1_CONFIGURATION.getDriveReduction() *
+            MK1_CONFIGURATION.getWheelDiameter() * Math.PI;
+    public static final double MAX_ANGULAR_VELOCITY = MAX_VELOCITY_METERS_PER_SECOND /
+            Math.hypot(Constants.DRIVETRAIN_TRACKWIDTH_METERS / 2.0, Constants.DRIVETRAIN_WHEELBASE_METERS / 2.0);
 
 
     private final SwerveModule frontLeftModule;
@@ -79,6 +78,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
                         .withPosition(6, 0), Constants.BACK_RIGHT_MODULE_DRIVE_MOTOR,
                 new TalonSRXSteerControllerConfiguration(Constants.BACK_RIGHT_MODULE_STEER_MOTOR,
                         Constants.BACK_RIGHT_MODULE_STEER_OFFSET));
+        shuffleboardTab.addNumber("Drive Rotation Velocity", ()->Math.toDegrees(chassisSpeeds.omegaRadiansPerSecond));
+        shuffleboardTab.addNumber("Max Angular Velocity", ()-> Math.toDegrees(MAX_ANGULAR_VELOCITY));
     }
 
     public void drive(ChassisSpeeds chassisSpeeds) {
@@ -94,6 +95,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         SwerveModuleState[] states = kinematics.toSwerveModuleStates(chassisSpeeds);
+        SwerveDriveKinematics.normalizeWheelSpeeds(states, MAX_VELOCITY_METERS_PER_SECOND);
 
         frontLeftModule.set(states[0].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[0].angle.getRadians());
         frontRightModule.set(states[1].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[1].angle.getRadians());
