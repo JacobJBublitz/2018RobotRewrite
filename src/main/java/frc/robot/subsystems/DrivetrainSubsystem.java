@@ -2,10 +2,12 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.sensors.PigeonIMU;
+import com.kauailabs.navx.frc.AHRS;
 import com.swervedrivespecialties.swervelib.ModuleConfiguration;
 import com.swervedrivespecialties.swervelib.SwerveModule;
 import com.swervedrivespecialties.swervelib.SwerveModuleFactory;
 import com.swervedrivespecialties.swervelib.SwerveModuleFactoryBuilder;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
@@ -47,7 +49,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
             new Translation2d(-Constants.DRIVETRAIN_TRACKWIDTH_METERS / 2.0, Constants.DRIVETRAIN_WHEELBASE_METERS / 2.0),
             new Translation2d(-Constants.DRIVETRAIN_TRACKWIDTH_METERS / 2.0, -Constants.DRIVETRAIN_WHEELBASE_METERS / 2.0));
 
-    private final PigeonIMU gyroscope = new PigeonIMU(Constants.DRIVETRAIN_PIGEON_ID);
+    private final AHRS m_navx = new AHRS(SPI.Port.kMXP, (byte) 200);
 
     private ChassisSpeeds chassisSpeeds = new ChassisSpeeds(0, 0, 0.0);
 
@@ -80,17 +82,25 @@ public class DrivetrainSubsystem extends SubsystemBase {
                         Constants.BACK_RIGHT_MODULE_STEER_OFFSET));
         shuffleboardTab.addNumber("Drive Rotation Velocity", ()->Math.toDegrees(chassisSpeeds.omegaRadiansPerSecond));
         shuffleboardTab.addNumber("Max Angular Velocity", ()-> Math.toDegrees(MAX_ANGULAR_VELOCITY));
+        shuffleboardTab.addNumber("Drivetrain Rotation Angle", () -> getGyroscopeRotation().getDegrees());
     }
 
     public void drive(ChassisSpeeds chassisSpeeds) {
         this.chassisSpeeds = chassisSpeeds;
     }
 
-    public Rotation2d getGyroscopeRotation(){
-        return new Rotation2d();
+    public void zeroGyroscope(){
+        m_navx.zeroYaw();
     }
 
-    public void zeroGyroscope(){}
+    public Rotation2d getGyroscopeRotation(){
+        if (m_navx.isMagnetometerCalibrated()) {
+            return Rotation2d.fromDegrees(m_navx.getFusedHeading());
+        }
+        return Rotation2d.fromDegrees(360.0 - m_navx.getYaw());
+    }
+
+
 
     @Override
     public void periodic() {
