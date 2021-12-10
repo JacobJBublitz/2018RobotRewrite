@@ -51,7 +51,7 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     new Button(m_controller::getBackButton)
-          .whenPressed(drivetrainSubsystem::zeroGyroscope);
+          .whenPressed(drivetrainSubsystem::zeroRotation);
   }
 
   /**
