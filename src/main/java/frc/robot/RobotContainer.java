@@ -6,6 +6,11 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.geometry.Pose2d;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
+import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Button;
@@ -15,6 +20,8 @@ import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.DrivetrainSubsystem;
 import frc.robot.subsystems.ExampleSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+
+import java.util.ArrayList;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -61,7 +68,19 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+//    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+//            new Pose2d(0,0, new Rotation2d()),
+//            new ArrayList<>(),
+//            new Pose2d(1,0, Rotation2d.fromDegrees(45)),
+//            new TrajectoryConfig(DrivetrainSubsystem.MAX_VELOCITY_METERS_PER_SECOND, 2)
+//    );
+//
+//    return drivetrainSubsystem.createTrajectoryFollowerCommand(trajectory);
     return new CharacterizeDrivetrainCommand(drivetrainSubsystem);
+  }
+
+  public DrivetrainSubsystem getDrivetrainSubsystem(){
+    return drivetrainSubsystem;
   }
 
   private static double deadband(double value, double deadband) {

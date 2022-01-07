@@ -6,6 +6,8 @@ import com.swervedrivespecialties.swervelib.SwerveModule;
 import com.swervedrivespecialties.swervelib.SwerveModuleFactory;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.Vector2d;
+import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.controller.ProfiledPIDController;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
@@ -16,7 +18,11 @@ import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import frc.robot.Constants;
 import frc.robot.swerve.TalonSRXDriveControllerFactory;
 import frc.robot.swerve.TalonSRXSteerControllerConfiguration;
@@ -37,6 +43,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
     public static final double MAX_ANGULAR_VELOCITY = MAX_VELOCITY_METERS_PER_SECOND /
             Math.hypot(Constants.DRIVETRAIN_TRACKWIDTH_METERS / 2.0, Constants.DRIVETRAIN_WHEELBASE_METERS / 2.0);
 
+    public static final double VELOCITY_CONSTANT = MAX_VOLTAGE / MAX_VELOCITY_METERS_PER_SECOND;
+    public static final double ACCELERATION_CONSTANT = MAX_VOLTAGE / 6.858;
 
     private final SwerveModule frontLeftModule;
     private final SwerveModule frontRightModule;
@@ -125,6 +133,23 @@ public class DrivetrainSubsystem extends SubsystemBase {
         return new Vector2d(
                 currentChassisSpeeds.vxMetersPerSecond,
                 currentChassisSpeeds.vyMetersPerSecond
+        );
+    }
+
+    public Command createTrajectoryFollowerCommand (Trajectory trajectory){
+        PIDController xController = new PIDController(25,0,2);
+        PIDController yController = new PIDController(25,0,2);
+        ProfiledPIDController thetaController = new ProfiledPIDController(5,0,0, new TrapezoidProfile.Constraints(1,1));
+
+        return new SwerveControllerCommand(
+                trajectory,
+                this::getPosition,
+                kinematics,
+                xController,
+                yController,
+                thetaController,
+                states -> targetChassisSpeeds = kinematics.toChassisSpeeds(states),
+                this
         );
     }
 

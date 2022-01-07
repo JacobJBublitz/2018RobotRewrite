@@ -1,5 +1,6 @@
 package frc.robot.swerve;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
 import com.ctre.phoenix.motorcontrol.TalonSRXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -18,6 +19,7 @@ public class TalonSRXDriveControllerFactory implements DriveControllerFactory<Ta
         motor.configAllSettings(config);
         motor.configSelectedFeedbackSensor(TalonSRXFeedbackDevice.QuadEncoder, 0, 50);
         motor.enableVoltageCompensation(true);
+        motor.setNeutralMode(NeutralMode.Brake);
         double sensorPositionCoefficient = ((1.0/80.0) * moduleConfiguration.getDriveReduction()) * (moduleConfiguration.getWheelDiameter() * Math.PI);
         double sensorVelocityCoeffecient = sensorPositionCoefficient * 10.0;
         return new Implementation(motor, sensorPositionCoefficient, sensorVelocityCoeffecient);
