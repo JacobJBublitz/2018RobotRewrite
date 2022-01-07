@@ -1,14 +1,11 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.sensors.PigeonIMU;
 import com.kauailabs.navx.frc.AHRS;
-import com.sun.source.doctree.SerialTree;
 import com.swervedrivespecialties.swervelib.ModuleConfiguration;
 import com.swervedrivespecialties.swervelib.SwerveModule;
 import com.swervedrivespecialties.swervelib.SwerveModuleFactory;
-import com.swervedrivespecialties.swervelib.SwerveModuleFactoryBuilder;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.drive.Vector2d;
 import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.geometry.Translation2d;
@@ -56,7 +53,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     private final AHRS m_navx = new AHRS(SPI.Port.kMXP, (byte) 200);
 
-    private ChassisSpeeds chassisSpeeds = new ChassisSpeeds(0, 0, 0.0);
+    private ChassisSpeeds targetChassisSpeeds = new ChassisSpeeds();
+    private ChassisSpeeds currentChassisSpeeds = new ChassisSpeeds();
 
     public DrivetrainSubsystem() {
         var moduleFactory = new SwerveModuleFactory<>(
@@ -86,19 +84,19 @@ public class DrivetrainSubsystem extends SubsystemBase {
                 new TalonSRXSteerControllerConfiguration(Constants.BACK_RIGHT_MODULE_STEER_MOTOR,
                         Constants.BACK_RIGHT_MODULE_STEER_OFFSET));
         odometry = new SwerveDriveOdometry(kinematics, getGyroscopeRotation());
-        shuffleboardTab.addNumber("Drive Rotation Velocity", ()->Math.toDegrees(chassisSpeeds.omegaRadiansPerSecond));
+        shuffleboardTab.addNumber("Drive Rotation Velocity", ()->Math.toDegrees(targetChassisSpeeds.omegaRadiansPerSecond));
         shuffleboardTab.addNumber("Max Angular Velocity", ()-> Math.toDegrees(MAX_ANGULAR_VELOCITY));
-        shuffleboardTab.addNumber("Drivetrain Angle", () -> getDriveTrainPosition().getRotation().getDegrees());
+        shuffleboardTab.addNumber("Drivetrain Angle", () -> getPosition().getRotation().getDegrees());
         shuffleboardTab.addNumber("PositionX", ()->odometry.getPoseMeters().getX());
         shuffleboardTab.addNumber("PositionY", ()->odometry.getPoseMeters().getY());
     }
 
     public void drive(ChassisSpeeds chassisSpeeds) {
-        this.chassisSpeeds = chassisSpeeds;
+        this.targetChassisSpeeds = chassisSpeeds;
     }
 
     public void zeroRotation(){
-        odometry.resetPosition(new Pose2d(getDriveTrainPosition().getX(), getDriveTrainPosition().getY(), new Rotation2d()), getGyroscopeRotation());
+        odometry.resetPosition(new Pose2d(getPosition().getX(), getPosition().getY(), new Rotation2d()), getGyroscopeRotation());
     }
 
     public Rotation2d getGyroscopeRotation(){
@@ -108,15 +106,31 @@ public class DrivetrainSubsystem extends SubsystemBase {
         return Rotation2d.fromDegrees(360.0 - m_navx.getYaw());
     }
 
-    public Pose2d getDriveTrainPosition(){
+    public Pose2d getPosition(){
         return odometry.getPoseMeters();
     }
 
+    public void setPosition(Pose2d pose) {
+        odometry.resetPosition(pose, getGyroscopeRotation());
+    }
 
+    public void setPosition(Vector2d position) {
+        odometry.resetPosition(
+                new Pose2d(position.x, position.y, getPosition().getRotation()),
+                getGyroscopeRotation()
+        );
+    }
+
+    public Vector2d getVelocity() {
+        return new Vector2d(
+                currentChassisSpeeds.vxMetersPerSecond,
+                currentChassisSpeeds.vyMetersPerSecond
+        );
+    }
 
     @Override
     public void periodic() {
-        SwerveModuleState[] states = kinematics.toSwerveModuleStates(chassisSpeeds);
+        SwerveModuleState[] states = kinematics.toSwerveModuleStates(targetChassisSpeeds);
         SwerveDriveKinematics.normalizeWheelSpeeds(states, MAX_VELOCITY_METERS_PER_SECOND);
 
         SwerveModuleState currentFrontLeftModuleState = new SwerveModuleState(frontLeftModule.getDriveVelocity(), new Rotation2d(frontLeftModule.getSteerAngle()));
@@ -125,7 +139,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
         SwerveModuleState currentBackRightModuleState = new SwerveModuleState(backRightModule.getDriveVelocity(), new Rotation2d(backRightModule.getSteerAngle()));
 
         Rotation2d gyroAngle = getGyroscopeRotation();
-
+        currentChassisSpeeds = kinematics.toChassisSpeeds(currentFrontLeftModuleState, currentFrontRightModuleState, currentBackLeftModuleState, currentBackRightModuleState);
         odometry.update(gyroAngle, currentFrontLeftModuleState, currentFrontRightModuleState, currentBackLeftModuleState, currentBackRightModuleState);
 
         frontLeftModule.set(states[0].speedMetersPerSecond / MAX_VELOCITY_METERS_PER_SECOND * MAX_VOLTAGE, states[0].angle.getRadians());
